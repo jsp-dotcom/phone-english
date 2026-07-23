@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daily Phone English · 전화영어 학습</title>
+<style>
+  :root{
+    --bg:#0f1220; --bg2:#151a2e; --card:#1b2138; --card2:#222a47;
+    --line:#2b3358; --text:#e8ecff; --muted:#9aa3c7; --accent:#5b8cff;
+    --accent2:#7c5bff; --good:#37d399; --warn:#ffb454; --bad:#ff6b81;
+    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#eef1fb; --bg2:#e4e9f8; --card:#ffffff; --card2:#f3f5fd;
+      --line:#dfe4f5; --text:#1a2036; --muted:#5b648a; --accent:#3a6bff;
+      --accent2:#7c5bff; --shadow:0 10px 30px rgba(40,60,120,.12);
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;
+    background:linear-gradient(160deg,var(--bg),var(--bg2)); color:var(--text);
+    min-height:100vh; line-height:1.5;
+  }
+  header{
+    position:sticky; top:0; z-index:20; backdrop-filter:blur(12px);
+    background:color-mix(in srgb,var(--bg) 78%, transparent);
+    border-bottom:1px solid var(--line);
+  }
+  .bar{max-width:1000px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:14px}
+  .logo{display:flex; align-items:center; gap:10px; font-weight:800; font-size:19px}
+  .logo .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2)); font-size:18px}
+  .spacer{flex:1}
+  .streak{font-size:13px; color:var(--muted); display:flex; align-items:center; gap:6px}
+  .streak b{color:var(--warn)}
+  main{max-width:1000px; margin:0 auto; padding:22px 20px 80px}
+
+  .tabs{display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap}
+  .tab{padding:9px 16px; border-radius:999px; border:1px solid var(--line);
+    background:var(--card); color:var(--muted); cursor:pointer; font-size:14px; font-weight:600;
+    transition:.15s}
+  .tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border-color:transparent}
+  .tab:hover{color:var(--text)}
+
+  .hero{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px; margin-bottom:22px; box-shadow:var(--shadow); position:relative; overflow:hidden}
+  .hero h1{margin:0 0 6px; font-size:26px}
+  .hero p{margin:0; color:var(--muted)}
+  .hero .glow{position:absolute; right:-40px; top:-40px; width:180px; height:180px; border-radius:50%;
+    background:radial-gradient(circle,var(--accent2),transparent 70%); opacity:.35}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px}
+  .lesson{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; cursor:pointer; transition:.18s; box-shadow:var(--shadow)}
+  .lesson:hover{transform:translateY(-3px); border-color:var(--accent)}
+  .lesson .emoji{font-size:30px}
+  .lesson h3{margin:10px 0 4px; font-size:17px}
+  .lesson .lv{font-size:12px; color:var(--muted)}
+  .lesson .pill{display:inline-block; margin-top:12px; font-size:11px; padding:3px 10px; border-radius:999px;
+    background:var(--card2); color:var(--muted)}
+  .lesson.done{border-color:var(--good)}
+  .lesson.done .pill{background:color-mix(in srgb,var(--good) 22%,transparent); color:var(--good)}
+  .barwrap{height:6px; background:var(--card2); border-radius:999px; margin-top:14px; overflow:hidden}
+  .barwrap i{display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0}
+
+  /* dialogue */
+  .back{background:none; border:none; color:var(--accent); cursor:pointer; font-size:14px; font-weight:600; margin-bottom:14px}
+  .dtitle{display:flex; align-items:center; gap:12px; margin-bottom:6px}
+  .dtitle .em{font-size:34px}
+  .dtitle h2{margin:0; font-size:24px}
+  .dsub{color:var(--muted); margin:0 0 20px}
+  .line{display:flex; gap:12px; margin-bottom:14px; align-items:flex-start}
+  .line.B{flex-direction:row-reverse}
+  .avatar{width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-size:18px; flex-shrink:0}
+  .avatar.A{background:color-mix(in srgb,var(--accent) 30%,transparent)}
+  .avatar.B{background:color-mix(in srgb,var(--accent2) 30%,transparent)}
+  .bubble{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; max-width:78%}
+  .line.B .bubble{background:var(--card2)}
+  .bubble .en{font-size:16px; font-weight:600}
+  .bubble .ko{font-size:13px; color:var(--muted); margin-top:4px}
+  .bubble .btns{display:flex; gap:8px; margin-top:8px}
+  .mini{border:1px solid var(--line); background:var(--bg2); color:var(--text); border-radius:9px;
+    padding:5px 10px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px}
+  .mini:hover{border-color:var(--accent)}
+  .mini.rec{color:var(--bad); border-color:var(--bad)}
+  .result{font-size:12px; margin-top:6px; padding:6px 10px; border-radius:8px; display:none}
+  .result.show{display:block}
+  .result.ok{background:color-mix(in srgb,var(--good) 18%,transparent); color:var(--good)}
+  .result.no{background:color-mix(in srgb,var(--bad) 18%,transparent); color:var(--bad)}
+
+  .exp{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-top:22px}
+  .exp h3{margin:0 0 12px; font-size:16px}
+  .exp .row{display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); align-items:center}
+  .exp .row:last-child{border-bottom:none}
+  .exp .en{font-weight:600}
+  .exp .ko{font-size:13px; color:var(--muted)}
+
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin:18px 0}
+  .btn{border:none; border-radius:11px; padding:11px 18px; font-weight:700; cursor:pointer; font-size:14px}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff}
+  .btn.ghost{background:var(--card); color:var(--text); border:1px solid var(--line)}
+
+  /* flashcards */
+  .fcwrap{display:flex; flex-direction:column; align-items:center; gap:18px}
+  .card3d{width:100%; max-width:520px; height:260px; perspective:1200px; cursor:pointer}
+  .inner{position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d}
+  .card3d.flip .inner{transform:rotateY(180deg)}
+  .face{position:absolute; inset:0; backface-visibility:hidden; border-radius:20px; display:grid; place-items:center;
+    padding:24px; text-align:center; border:1px solid var(--line); box-shadow:var(--shadow)}
+  .face.front{background:var(--card)}
+  .face.back{background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; transform:rotateY(180deg)}
+  .face .big{font-size:26px; font-weight:800}
+  .face .sm{font-size:14px; opacity:.85; margin-top:8px}
+  .fcnav{display:flex; gap:10px; align-items:center}
+  .count{color:var(--muted); font-size:14px; min-width:70px; text-align:center}
+
+  .settings{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-top:22px}
+  .settings label{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0}
+  .settings input[type=range]{width:180px}
+  select{background:var(--bg2); color:var(--text); border:1px solid var(--line); border-radius:9px; padding:7px 10px}
+  .hidden{display:none}
+  footer{text-align:center; color:var(--muted); font-size:12px; padding:20px}
+  .note{font-size:12px; color:var(--muted); margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo"><span class="ic">📞</span> Daily Phone English</div>
+    <div class="spacer"></div>
+    <div class="streak">🔥 연속 <b id="streak">0</b>일 · ⭐ <b id="xp">0</b> XP</div>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" data-view="home">🏠 홈</button>
+    <button class="tab" data-view="cards">🃏 표현 카드</button>
+    <button class="tab" data-view="settings">⚙️ 설정</button>
+  </div>
+
+  <!-- HOME -->
+  <section id="view-home">
+    <div class="hero">
+      <div class="glow"></div>
+      <h1>매일 10분, 전화영어 회화</h1>
+      <p>상황별 대화를 듣고, 따라 말하고, 발음을 평가받으세요. 마이크만 있으면 됩니다.</p>
+    </div>
+    <div class="grid" id="lessonGrid"></div>
+  </section>
+
+  <!-- LESSON DETAIL -->
+  <section id="view-lesson" class="hidden">
+    <button class="back" id="backBtn">← 목록으로</button>
+    <div class="dtitle"><span class="em" id="dEm">📞</span><h2 id="dTitle"></h2></div>
+    <p class="dsub" id="dSub"></p>
+    <div class="toolbar">
+      <button class="btn primary" id="playAll">▶ 전체 대화 듣기</button>
+      <button class="btn ghost" id="roleplay">🎭 역할극 (B 역할)</button>
+    </div>
+    <div id="dialogue"></div>
+    <div class="exp" id="expBox">
+      <h3>🔑 핵심 표현</h3>
+      <div id="expList"></div>
+    </div>
+  </section>
+
+  <!-- FLASHCARDS -->
+  <section id="view-cards" class="hidden">
+    <div class="hero"><div class="glow"></div>
+      <h1>핵심 표현 카드</h1><p>카드를 눌러 뜻을 확인하고, 스피커로 발음을 들어보세요.</p></div>
+    <div class="fcwrap">
+      <div class="card3d" id="card3d">
+        <div class="inner">
+          <div class="face front"><div><div class="big" id="fcFront"></div><div class="sm">탭하여 뜻 보기</div></div></div>
+          <div class="face back"><div><div class="big" id="fcBack"></div><div class="sm" id="fcHint"></div></div></div>
+        </div>
+      </div>
+      <div class="fcnav">
+        <button class="btn ghost" id="fcPrev">←</button>
+        <button class="btn ghost" id="fcSpeak">🔊 듣기</button>
+        <span class="count" id="fcCount"></span>
+        <button class="btn ghost" id="fcNext">→</button>
+        <button class="btn primary" id="fcShuffle">🔀 섞기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="view-settings" class="hidden">
+    <div class="settings">
+      <h3 style="margin-top:0">⚙️ 음성 설정</h3>
+      <label>발음 음성
+        <select id="voiceSel"></select>
+      </label>
+      <label>속도 <span id="rateVal">1.0x</span>
+        <input type="range" id="rate" min="0.5" max="1.3" step="0.1" value="0.95">
+      </label>
+      <label>발음 평가 마이크
+        <span id="micStatus" style="color:var(--muted);font-size:13px">확인 중…</span>
+      </label>
+      <p class="note">음성 인식과 발음 평가는 Chrome / Edge 브라우저에서 가장 잘 작동합니다.</p>
+      <hr style="border-color:var(--line);margin:16px 0">
+      <button class="btn ghost" id="resetBtn">학습 기록 초기화</button>
+    </div>
+  </section>
+</main>
+
+<footer>Daily Phone English — 브라우저 안에서 동작하는 전화영어 학습 도구</footer>
+
+<script>
+/* ---------------- DATA ---------------- */
+const LESSONS = [
+  { id:"greeting", emoji:"👋", title:"전화 첫인사", level:"초급",
+    sub:"전화를 받고 자신을 소개하는 기본 표현",
+    lines:[
+      {s:"A", en:"Hello, this is Alex speaking.", ko:"안녕하세요, 저는 Alex입니다."},
+      {s:"B", en:"Hi Alex, this is Mina. How are you today?", ko:"안녕 Alex, 저는 Mina예요. 오늘 어때요?"},
+      {s:"A", en:"I'm doing great, thanks. And you?", ko:"아주 좋아요, 고마워요. 당신은요?"},
+      {s:"B", en:"Pretty good! Is now a good time to talk?", ko:"좋아요! 지금 통화 괜찮으세요?"},
+      {s:"A", en:"Sure, go ahead.", ko:"물론이죠, 말씀하세요."},
+    ],
+    exp:[
+      {en:"this is ___ speaking", ko:"저는 ___입니다 (전화에서)"},
+      {en:"Is now a good time to talk?", ko:"지금 통화 괜찮으세요?"},
+      {en:"go ahead", ko:"말씀하세요 / 계속하세요"},
+    ]},
+  { id:"appointment", emoji:"📅", title:"약속 잡기", level:"초중급",
+    sub:"미팅이나 통화 시간을 정하는 대화",
+    lines:[
+      {s:"A", en:"I'd like to schedule a meeting this week.", ko:"이번 주에 미팅을 잡고 싶어요."},
+      {s:"B", en:"Sure. What day works best for you?", ko:"좋아요. 어느 요일이 가장 괜찮으세요?"},
+      {s:"A", en:"How about Thursday afternoon?", ko:"목요일 오후는 어때요?"},
+      {s:"B", en:"Thursday works. Let's say 2 p.m.", ko:"목요일 괜찮아요. 오후 2시로 하죠."},
+      {s:"A", en:"Perfect. I'll send you an invite.", ko:"완벽해요. 초대장을 보낼게요."},
+    ],
+    exp:[
+      {en:"What day works best for you?", ko:"어느 요일이 가장 좋으세요?"},
+      {en:"How about ___?", ko:"___는 어때요?"},
+      {en:"Let's say 2 p.m.", ko:"오후 2시로 하죠."},
+    ]},
+  { id:"message", emoji:"📝", title:"메시지 남기기", level:"초중급",
+    sub:"담당자가 자리에 없을 때 메시지 전달",
+    lines:[
+      {s:"A", en:"Can I speak to Mr. Kim, please?", ko:"김 선생님과 통화할 수 있을까요?"},
+      {s:"B", en:"He's not available right now. Can I take a message?", ko:"지금 자리에 안 계세요. 메시지 남겨드릴까요?"},
+      {s:"A", en:"Yes, please tell him I called about the report.", ko:"네, 보고서 건으로 전화했다고 전해주세요."},
+      {s:"B", en:"Sure. Could I have your name and number?", ko:"물론이죠. 성함과 연락처를 알려주시겠어요?"},
+      {s:"A", en:"It's Alex, 010-1234-5678.", ko:"Alex이고, 010-1234-5678입니다."},
+    ],
+    exp:[
+      {en:"Can I take a message?", ko:"메시지 남겨드릴까요?"},
+      {en:"He's not available right now.", ko:"지금 자리에 안 계세요."},
+      {en:"Could I have your name and number?", ko:"성함과 연락처를 알려주시겠어요?"},
+    ]},
+  { id:"clarify", emoji:"🔁", title:"다시 물어보기", level:"중급",
+    sub:"잘 안 들릴 때 정중하게 다시 확인하기",
+    lines:[
+      {s:"A", en:"Sorry, could you repeat that?", ko:"죄송해요, 다시 말씀해 주시겠어요?"},
+      {s:"B", en:"Of course. I said the deadline is Friday.", ko:"물론이죠. 마감이 금요일이라고 했어요."},
+      {s:"A", en:"You're breaking up a little. Can you speak up?", ko:"소리가 좀 끊겨요. 좀 더 크게 말해주시겠어요?"},
+      {s:"B", en:"Is this better? The deadline is Friday.", ko:"이제 나아요? 마감은 금요일이에요."},
+      {s:"A", en:"Got it, thanks for clarifying.", ko:"알겠어요, 확인해 주셔서 고마워요."},
+    ],
+    exp:[
+      {en:"Could you repeat that?", ko:"다시 말씀해 주시겠어요?"},
+      {en:"You're breaking up.", ko:"소리가 끊겨요."},
+      {en:"Thanks for clarifying.", ko:"확인해 주셔서 고마워요."},
+    ]},
+  { id:"complaint", emoji:"⚠️", title:"문제 해결 / 불만", level:"중급",
+    sub:"서비스 문제를 설명하고 해결을 요청하기",
+    lines:[
+      {s:"A", en:"I'm calling about an issue with my order.", ko:"제 주문 문제로 전화드렸어요."},
+      {s:"B", en:"I'm sorry to hear that. What seems to be the problem?", ko:"안타깝네요. 어떤 문제인가요?"},
+      {s:"A", en:"The item arrived damaged.", ko:"물건이 파손된 채로 도착했어요."},
+      {s:"B", en:"I apologize. We'll send a replacement right away.", ko:"죄송합니다. 바로 교체품을 보내드릴게요."},
+      {s:"A", en:"Thank you, I appreciate your help.", ko:"고마워요, 도와주셔서 감사해요."},
+    ],
+    exp:[
+      {en:"I'm calling about ___", ko:"___ 건으로 전화드렸어요"},
+      {en:"What seems to be the problem?", ko:"어떤 문제인가요?"},
+      {en:"We'll send a replacement.", ko:"교체품을 보내드릴게요."},
+    ]},
+  { id:"closing", emoji:"👍", title:"통화 마무리", level:"초급",
+    sub:"정중하게 통화를 끝내는 표현",
+    lines:[
+      {s:"A", en:"Well, I think that's everything.", ko:"자, 이걸로 다 된 것 같아요."},
+      {s:"B", en:"Great. Thanks for calling.", ko:"좋아요. 전화 주셔서 고마워요."},
+      {s:"A", en:"Let's touch base next week.", ko:"다음 주에 다시 얘기해요."},
+      {s:"B", en:"Sounds good. Have a great day!", ko:"좋아요. 좋은 하루 보내세요!"},
+      {s:"A", en:"You too. Bye!", ko:"당신도요. 안녕히 계세요!"},
+    ],
+    exp:[
+      {en:"That's everything.", ko:"이걸로 다 됐어요."},
+      {en:"Let's touch base next week.", ko:"다음 주에 다시 얘기해요."},
+      {en:"Have a great day!", ko:"좋은 하루 보내세요!"},
+    ]},
+];
+
+/* ---------------- STATE ---------------- */
+const store = {
+  get(){ try{return JSON.parse(localStorage.getItem('pe_state'))||{}}catch(e){return{}} },
+  set(s){ localStorage.setItem('pe_state', JSON.stringify(s)); }
+};
+let state = Object.assign({ progress:{}, xp:0, streak:0, lastDay:null }, store.get());
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function markStreak(){
+  const t = todayStr();
+  if(state.lastDay === t) return;
+  const y = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  state.streak = (state.lastDay === y) ? state.streak+1 : 1;
+  state.lastDay = t; save();
+}
+function addXp(n){ state.xp += n; save(); renderTop(); }
+function save(){ store.set(state); }
+function renderTop(){ document.getElementById('xp').textContent=state.xp; document.getElementById('streak').textContent=state.streak; }
+
+/* ---------------- SPEECH (TTS) ---------------- */
+let voices=[], settings=Object.assign({voiceURI:null, rate:0.95}, JSON.parse(localStorage.getItem('pe_voice')||'{}'));
+function loadVoices(){
+  voices = speechSynthesis.getVoices().filter(v=>v.lang.startsWith('en'));
+  const sel=document.getElementById('voiceSel'); sel.innerHTML='';
+  voices.forEach(v=>{ const o=document.createElement('option'); o.value=v.voiceURI; o.textContent=`${v.name} (${v.lang})`; sel.appendChild(o); });
+  if(settings.voiceURI) sel.value=settings.voiceURI;
+}
+speechSynthesis.onvoiceschanged=loadVoices; loadVoices();
+function speak(text, cb){
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=settings.rate;
+  const v=voices.find(v=>v.voiceURI===settings.voiceURI); if(v)u.voice=v;
+  if(cb)u.onend=cb;
+  speechSynthesis.speak(u);
+}
+
+/* ---------------- SPEECH RECOGNITION ---------------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+function normalize(s){ return s.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim(); }
+function similarity(a,b){
+  a=normalize(a).split(' '); b=normalize(b).split(' ');
+  const setB=new Set(b); let hit=0; a.forEach(w=>{if(setB.has(w))hit++;});
+  return Math.round(hit/Math.max(a.length,1)*100);
+}
+function listen(target, resultEl, btn){
+  if(!SR){ resultEl.className='result no show'; resultEl.textContent='이 브라우저는 음성 인식을 지원하지 않아요 (Chrome/Edge 권장).'; return; }
+  const rec=new SR(); rec.lang='en-US'; rec.interimResults=false; rec.maxAlternatives=1;
+  btn.classList.add('rec'); btn.querySelector('.lbl').textContent='듣는 중…';
+  rec.start();
+  rec.onresult=e=>{
+    const said=e.results[0][0].transcript;
+    const score=similarity(said, target);
+    if(score>=70){ resultEl.className='result ok show'; resultEl.innerHTML=`✅ 좋아요! (${score}점) "<i>${said}</i>"`; addXp(10); }
+    else { resultEl.className='result no show'; resultEl.innerHTML=`🔁 다시 해볼까요? (${score}점) 들린 문장: "<i>${said}</i>"`; }
+  };
+  rec.onerror=e=>{ resultEl.className='result no show'; resultEl.textContent='마이크를 사용할 수 없어요: '+e.error; };
+  rec.onend=()=>{ btn.classList.remove('rec'); btn.querySelector('.lbl').textContent='따라 말하기'; };
+}
+
+/* ---------------- VIEWS ---------------- */
+function show(view){
+  ['home','lesson','cards','settings'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden'));
+  document.getElementById('view-'+view).classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===view));
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ if(t.dataset.view==='cards')renderCard(); show(t.dataset.view); });
+
+function renderLessons(){
+  const g=document.getElementById('lessonGrid'); g.innerHTML='';
+  LESSONS.forEach(l=>{
+    const done = state.progress[l.id];
+    const el=document.createElement('div'); el.className='lesson'+(done?' done':'');
+    el.innerHTML=`<div class="emoji">${l.emoji}</div>
+      <h3>${l.title}</h3><div class="lv">${l.level} · 문장 ${l.lines.length}개</div>
+      <span class="pill">${done?'✓ 완료':'학습하기'}</span>
+      <div class="barwrap"><i style="width:${done?100:0}%"></i></div>`;
+    el.onclick=()=>openLesson(l);
+    g.appendChild(el);
+  });
+}
+
+let current=null;
+function openLesson(l){
+  current=l; markStreak();
+  document.getElementById('dEm').textContent=l.emoji;
+  document.getElementById('dTitle').textContent=l.title;
+  document.getElementById('dSub').textContent=l.sub;
+  const d=document.getElementById('dialogue'); d.innerHTML='';
+  l.lines.forEach((ln,i)=>{
+    const wrap=document.createElement('div'); wrap.className='line '+ln.s;
+    wrap.innerHTML=`
+      <div class="avatar ${ln.s}">${ln.s==='A'?'🧑':'👩'}</div>
+      <div class="bubble">
+        <div class="en">${ln.en}</div>
+        <div class="ko">${ln.ko}</div>
+        <div class="btns">
+          <button class="mini play">🔊 듣기</button>
+          <button class="mini rec-btn"><span>🎙️</span><span class="lbl">따라 말하기</span></button>
+        </div>
+        <div class="result"></div>
+      </div>`;
+    wrap.querySelector('.play').onclick=()=>speak(ln.en);
+    const rb=wrap.querySelector('.rec-btn'); const res=wrap.querySelector('.result');
+    rb.onclick=()=>listen(ln.en, res, rb);
+    d.appendChild(wrap);
+  });
+  const ex=document.getElementById('expList'); ex.innerHTML='';
+  l.exp.forEach(e=>{
+    const r=document.createElement('div'); r.className='row';
+    r.innerHTML=`<div><div class="en">${e.en}</div><div class="ko">${e.ko}</div></div>
+      <button class="mini">🔊</button>`;
+    r.querySelector('.mini').onclick=()=>speak(e.en);
+    ex.appendChild(r);
+  });
+  // mark complete + xp once
+  if(!state.progress[l.id]){ state.progress[l.id]=true; addXp(20); save(); }
+  show('lesson');
+}
+document.getElementById('backBtn').onclick=()=>{ renderLessons(); show('home'); };
+
+document.getElementById('playAll').onclick=()=>{
+  if(!current)return; let i=0;
+  (function next(){ if(i>=current.lines.length)return; speak(current.lines[i].en, ()=>{ i++; setTimeout(next,500); }); })();
+};
+document.getElementById('roleplay').onclick=()=>{
+  if(!current)return; let i=0;
+  (function next(){
+    if(i>=current.lines.length)return;
+    const ln=current.lines[i];
+    if(ln.s==='A'){ speak(ln.en, ()=>{ i++; setTimeout(next,400); }); }
+    else { alert(`당신(B) 차례입니다:\n\n"${ln.en}"\n${ln.ko}\n\n확인을 누르면 계속됩니다.`); i++; next(); }
+  })();
+};
+
+/* ---------------- FLASHCARDS ---------------- */
+let allCards=[], fcIdx=0;
+function buildCards(){ allCards=[]; LESSONS.forEach(l=>l.exp.forEach(e=>allCards.push(e))); }
+function renderCard(){
+  if(!allCards.length)buildCards();
+  const c=allCards[fcIdx];
+  document.getElementById('fcFront').textContent=c.en;
+  document.getElementById('fcBack').textContent=c.ko;
+  document.getElementById('fcHint').textContent=c.en;
+  document.getElementById('fcCount').textContent=`${fcIdx+1} / ${allCards.length}`;
+  document.getElementById('card3d').classList.remove('flip');
+}
+document.getElementById('card3d').onclick=()=>document.getElementById('card3d').classList.toggle('flip');
+document.getElementById('fcPrev').onclick=()=>{ fcIdx=(fcIdx-1+allCards.length)%allCards.length; renderCard(); };
+document.getElementById('fcNext').onclick=()=>{ fcIdx=(fcIdx+1)%allCards.length; renderCard(); };
+document.getElementById('fcSpeak').onclick=()=>speak(allCards[fcIdx].en);
+document.getElementById('fcShuffle').onclick=()=>{ allCards.sort(()=>Math.random()-0.5); fcIdx=0; renderCard(); };
+
+/* ---------------- SETTINGS ---------------- */
+document.getElementById('voiceSel').onchange=e=>{ settings.voiceURI=e.target.value; localStorage.setItem('pe_voice',JSON.stringify(settings)); };
+const rate=document.getElementById('rate');
+rate.value=settings.rate; document.getElementById('rateVal').textContent=settings.rate+'x';
+rate.oninput=e=>{ settings.rate=parseFloat(e.target.value); document.getElementById('rateVal').textContent=settings.rate+'x'; localStorage.setItem('pe_voice',JSON.stringify(settings)); };
+document.getElementById('micStatus').textContent = SR ? '✅ 사용 가능' : '❌ 미지원 (Chrome/Edge 권장)';
+document.getElementById('resetBtn').onclick=()=>{ if(confirm('학습 기록을 모두 지울까요?')){ state={progress:{},xp:0,streak:0,lastDay:null}; save(); renderTop(); renderLessons(); } };
+
+/* ---------------- INIT ---------------- */
+renderTop(); renderLessons(); buildCards();
+</script>
+</body>
+</html>
