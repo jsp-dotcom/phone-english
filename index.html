@@ -131,7 +131,7 @@
   <div class="bar">
     <div class="logo"><span class="ic">📞</span> Daily Phone English</div>
     <div class="spacer"></div>
-    <div class="streak">🔥 연속 <b id="streak">0</b>일 · ⭐ <b id="xp">0</b> XP</div>
+    <div class="streak">🔥 연속 <b id="streak">0</b>일 · ⭐ <b id="xp">0</b> XP <span id="syncDot" title="클라우드 동기화" style="margin-left:6px">☁️</span></div>
   </div>
 </header>
 
@@ -211,7 +211,30 @@
 
 <footer>Daily Phone English — 브라우저 안에서 동작하는 전화영어 학습 도구</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+/* ---------------- SUPABASE CONFIG ---------------- */
+const SUPABASE_URL = "https://jhcrmcnhghwnvjrnpxyj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_3F_K7C0WKsyy0BjMEl6Wtw_21vkiMDN"; // publishable(공개용) 키 — 클라이언트 노출 안전
+let sb = null;
+try { if(window.supabase){ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } } catch(e){ console.warn('supabase init 실패', e); }
+
+/* 기기별 익명 ID (로그인 없이 진도 동기화용) */
+function deviceId(){
+  let id = localStorage.getItem('pe_device');
+  if(!id){
+    id = (crypto.randomUUID && crypto.randomUUID()) ||
+         ('dev-'+Math.abs(Date.now()^(performance.now()*1e6)).toString(36));
+    localStorage.setItem('pe_device', id);
+  }
+  return id;
+}
+function setSync(status){ // 'ok' | 'sync' | 'off'
+  const d = document.getElementById('syncDot'); if(!d) return;
+  d.textContent = status==='ok' ? '☁️' : status==='sync' ? '🔄' : '⚠️';
+  d.title = status==='ok' ? '클라우드 동기화됨' : status==='sync' ? '동기화 중…' : '오프라인 (로컬 저장만)';
+}
+
 /* ---------------- DATA ---------------- */
 const LESSONS = [
   { id:"greeting", emoji:"👋", title:"전화 첫인사", level:"초급",
@@ -316,7 +339,44 @@ function markStreak(){
   state.lastDay = t; save();
 }
 function addXp(n){ state.xp += n; save(); renderTop(); }
-function save(){ store.set(state); }
+function save(){ store.set(state); cloudSave(); }
+
+/* ---------------- CLOUD SYNC ---------------- */
+let _saveTimer=null;
+function cloudSave(){
+  if(!sb) return;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async ()=>{
+    setSync('sync');
+    const row = {
+      device_id: deviceId(),
+      xp: state.xp|0, streak: state.streak|0,
+      last_day: state.lastDay || null,
+      lessons: state.progress || {}
+    };
+    const { error } = await sb.from('progress').upsert(row, { onConflict:'device_id' });
+    if(error){ console.warn('cloudSave 오류', error.message); setSync('off'); }
+    else setSync('ok');
+  }, 600);
+}
+async function cloudLoad(){
+  if(!sb){ setSync('off'); return; }
+  setSync('sync');
+  const { data, error } = await sb.from('progress')
+    .select('xp,streak,last_day,lessons').eq('device_id', deviceId()).maybeSingle();
+  if(error){ console.warn('cloudLoad 오류', error.message); setSync('off'); return; }
+  if(data){
+    // 진도 손실 방지: XP는 큰 값, 완료 레슨은 합집합, 연속일은 최근 날짜 기준
+    state.xp = Math.max(state.xp|0, data.xp|0);
+    state.progress = Object.assign({}, data.lessons||{}, state.progress||{});
+    if(!state.lastDay || (data.last_day && data.last_day > state.lastDay)){
+      state.lastDay = data.last_day; state.streak = data.streak|0;
+    }
+    store.set(state); renderTop(); renderLessons();
+  }
+  setSync('ok');
+  cloudSave(); // 병합 결과를 클라우드에 반영
+}
 function renderTop(){ document.getElementById('xp').textContent=state.xp; document.getElementById('streak').textContent=state.streak; }
 
 /* ---------------- SPEECH (TTS) ---------------- */
@@ -462,6 +522,8 @@ document.getElementById('resetBtn').onclick=()=>{ if(confirm('학습 기록을 �
 
 /* ---------------- INIT ---------------- */
 renderTop(); renderLessons(); buildCards();
+setSync(sb ? 'sync' : 'off');
+cloudLoad();
 </script>
 </body>
 </html>
