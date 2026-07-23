@@ -24,21 +24,25 @@ create trigger trg_progress_touch
 -- 3) RLS 활성화
 alter table public.progress enable row level security;
 
--- 4) 정책: 로그인 없는 기기ID 기반 앱이므로 anon(publishable) 키에 읽기/쓰기 허용
---    ※ 보안 주의: 이 정책은 anon 키로 모든 행을 읽고 쓸 수 있게 합니다.
---      저장되는 값은 XP/연속일/완료레슨 뿐이라 민감정보는 없지만,
---      제대로 된 사용자별 보호가 필요하면 아래 "인증 버전" 주석을 참고하세요.
+-- 4) 정책: 회원가입/로그인(Supabase Auth) 기반 — 각 사용자는 '자기 행'만 접근
+--    device_id 컬럼에는 로그인 사용자의 auth.uid() 가 저장됩니다.
+--    (이전에 만들었던 관대한 anon 정책이 있으면 함께 제거)
 drop policy if exists "anon_select" on public.progress;
 drop policy if exists "anon_insert" on public.progress;
 drop policy if exists "anon_update" on public.progress;
+drop policy if exists "own_select" on public.progress;
+drop policy if exists "own_insert" on public.progress;
+drop policy if exists "own_update" on public.progress;
 
-create policy "anon_select" on public.progress for select using (true);
-create policy "anon_insert" on public.progress for insert with check (true);
-create policy "anon_update" on public.progress for update using (true) with check (true);
+create policy "own_select" on public.progress for select
+  to authenticated using (auth.uid() = device_id);
+create policy "own_insert" on public.progress for insert
+  to authenticated with check (auth.uid() = device_id);
+create policy "own_update" on public.progress for update
+  to authenticated using (auth.uid() = device_id) with check (auth.uid() = device_id);
 
--- ─────────────────────────────────────────────────────────────
--- (선택) 인증 버전: Supabase Anonymous 로그인 + auth.uid() 기반 보호
---   1. Dashboard → Authentication → Providers → "Anonymous sign-ins" 활성화
---   2. progress.device_id 대신 user_id uuid 컬럼(기본값 auth.uid())을 쓰고
---      정책을 using (auth.uid() = user_id) 로 제한하면 각자 자기 행만 접근 가능
--- ─────────────────────────────────────────────────────────────
+-- 참고
+--  · 비로그인(게스트) 사용자는 클라우드에 접근할 수 없고 브라우저 로컬에만 저장됩니다.
+--  · 이메일 인증을 끄고 가입 즉시 로그인되게 하려면:
+--    Dashboard → Authentication → Sign In / Providers → Email → "Confirm email" 끄기
+--  · 이전에 anon 키로 만든 테스트/기기 행은 이제 접근 불가(무해)하며 필요 시 Table Editor에서 삭제하세요.

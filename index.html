@@ -124,6 +124,28 @@
   .hidden{display:none}
   footer{text-align:center; color:var(--muted); font-size:12px; padding:20px}
   .note{font-size:12px; color:var(--muted); margin-top:8px}
+
+  /* account + auth */
+  .acct{display:flex; align-items:center; gap:8px}
+  .acct .email{font-size:12px; color:var(--muted); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .modal{position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center;
+    background:rgba(4,6,16,.6); backdrop-filter:blur(4px); padding:20px}
+  .modal.show{display:flex}
+  .modal-card{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:26px;
+    width:100%; max-width:400px; box-shadow:var(--shadow); position:relative}
+  .modal-card h2{margin:0 0 4px; font-size:22px}
+  .modal-card .lead{margin:0 0 18px; color:var(--muted); font-size:14px}
+  .modal-card .x{position:absolute; top:14px; right:16px; background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer}
+  .field{margin-bottom:12px}
+  .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px}
+  .field input{width:100%; padding:11px 12px; border-radius:11px; border:1px solid var(--line);
+    background:var(--bg2); color:var(--text); font-size:15px}
+  .field input:focus{outline:none; border-color:var(--accent)}
+  .authmsg{font-size:13px; min-height:18px; margin:2px 0 12px}
+  .authmsg.no{color:var(--bad)} .authmsg.ok{color:var(--good)}
+  .authtoggle{text-align:center; font-size:13px; color:var(--muted); margin-top:14px}
+  .authtoggle a{color:var(--accent); cursor:pointer; font-weight:600}
+  .btn.full{width:100%; justify-content:center; display:flex}
 </style>
 </head>
 <body>
@@ -131,7 +153,8 @@
   <div class="bar">
     <div class="logo"><span class="ic">📞</span> Daily Phone English</div>
     <div class="spacer"></div>
-    <div class="streak">🔥 연속 <b id="streak">0</b>일 · ⭐ <b id="xp">0</b> XP <span id="syncDot" title="클라우드 동기화" style="margin-left:6px">☁️</span></div>
+    <div class="streak">🔥 연속 <b id="streak">0</b>일 · ⭐ <b id="xp">0</b> XP <span id="syncDot" title="동기화 상태" style="margin-left:6px">💾</span></div>
+    <div class="acct" id="acct"></div>
   </div>
 </header>
 
@@ -209,6 +232,20 @@
   </section>
 </main>
 
+<!-- AUTH MODAL -->
+<div class="modal" id="authModal">
+  <div class="modal-card">
+    <button class="x" id="authClose">✕</button>
+    <h2 id="authTitle">로그인</h2>
+    <p class="lead" id="authLead">로그인하면 학습 진도가 계정에 저장되어 어느 기기에서든 이어집니다.</p>
+    <div class="field"><label>이메일</label><input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email"></div>
+    <div class="field"><label>비밀번호</label><input type="password" id="authPw" placeholder="6자 이상" autocomplete="current-password"></div>
+    <div class="authmsg" id="authMsg"></div>
+    <button class="btn primary full" id="authSubmit">로그인</button>
+    <div class="authtoggle" id="authToggle"></div>
+  </div>
+</div>
+
 <footer>Daily Phone English — 브라우저 안에서 동작하는 전화영어 학습 도구</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -229,10 +266,14 @@ function deviceId(){
   }
   return id;
 }
-function setSync(status){ // 'ok' | 'sync' | 'off'
+let currentUser = null;
+function cloudKey(){ return currentUser ? currentUser.id : null; } // 로그인 사용자만 클라우드 사용
+function setSync(status){ // 'ok' | 'sync' | 'off' | 'local'
   const d = document.getElementById('syncDot'); if(!d) return;
-  d.textContent = status==='ok' ? '☁️' : status==='sync' ? '🔄' : '⚠️';
-  d.title = status==='ok' ? '클라우드 동기화됨' : status==='sync' ? '동기화 중…' : '오프라인 (로컬 저장만)';
+  const icon = {ok:'☁️', sync:'🔄', off:'⚠️', local:'💾'};
+  const tip  = {ok:'클라우드 동기화됨 (로그인)', sync:'동기화 중…', off:'동기화 오류', local:'로컬 저장 · 로그인하면 클라우드 동기화'};
+  d.textContent = icon[status] || '💾';
+  d.title = tip[status] || tip.local;
 }
 
 /* ---------------- DATA ---------------- */
@@ -344,12 +385,13 @@ function save(){ store.set(state); cloudSave(); }
 /* ---------------- CLOUD SYNC ---------------- */
 let _saveTimer=null;
 function cloudSave(){
-  if(!sb) return;
+  const key = cloudKey();
+  if(!sb || !key) return;   // 게스트(비로그인)는 로컬에만 저장
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(async ()=>{
     setSync('sync');
     const row = {
-      device_id: deviceId(),
+      device_id: key,        // 로그인 사용자의 auth.uid()
       xp: state.xp|0, streak: state.streak|0,
       last_day: state.lastDay || null,
       lessons: state.progress || {}
@@ -360,22 +402,23 @@ function cloudSave(){
   }, 600);
 }
 async function cloudLoad(){
-  if(!sb){ setSync('off'); return; }
+  const key = cloudKey();
+  if(!sb || !key){ setSync('local'); return; }  // 비로그인: 로컬 전용
   setSync('sync');
   const { data, error } = await sb.from('progress')
-    .select('xp,streak,last_day,lessons').eq('device_id', deviceId()).maybeSingle();
+    .select('xp,streak,last_day,lessons').eq('device_id', key).maybeSingle();
   if(error){ console.warn('cloudLoad 오류', error.message); setSync('off'); return; }
   if(data){
-    // 진도 손실 방지: XP는 큰 값, 완료 레슨은 합집합, 연속일은 최근 날짜 기준
-    state.xp = Math.max(state.xp|0, data.xp|0);
-    state.progress = Object.assign({}, data.lessons||{}, state.progress||{});
-    if(!state.lastDay || (data.last_day && data.last_day > state.lastDay)){
-      state.lastDay = data.last_day; state.streak = data.streak|0;
-    }
-    store.set(state); renderTop(); renderLessons();
+    // 계정 진도가 원본 — 클라우드 값으로 복원
+    state = { progress:data.lessons||{}, xp:data.xp|0, streak:data.streak|0, lastDay:data.last_day||null };
+    store.set(state);
+  } else {
+    // 신규 계정: 0에서 시작하고 첫 행 생성 (게스트 진도와 분리)
+    state = { progress:{}, xp:0, streak:0, lastDay:null };
+    store.set(state); cloudSave();
   }
+  renderTop(); renderLessons();
   setSync('ok');
-  cloudSave(); // 병합 결과를 클라우드에 반영
 }
 function renderTop(){ document.getElementById('xp').textContent=state.xp; document.getElementById('streak').textContent=state.streak; }
 
@@ -520,10 +563,94 @@ rate.oninput=e=>{ settings.rate=parseFloat(e.target.value); document.getElementB
 document.getElementById('micStatus').textContent = SR ? '✅ 사용 가능' : '❌ 미지원 (Chrome/Edge 권장)';
 document.getElementById('resetBtn').onclick=()=>{ if(confirm('학습 기록을 모두 지울까요?')){ state={progress:{},xp:0,streak:0,lastDay:null}; save(); renderTop(); renderLessons(); } };
 
+/* ---------------- AUTH ---------------- */
+let authMode = 'login';
+function el(id){ return document.getElementById(id); }
+function authMsg(t, ok){ const m=el('authMsg'); m.textContent=t||''; m.className='authmsg '+(ok?'ok':'no'); }
+function openAuth(mode){ setAuthMode(mode||'login'); authMsg(''); el('authPw').value=''; el('authModal').classList.add('show'); el('authEmail').focus(); }
+function closeAuth(){ el('authModal').classList.remove('show'); }
+function setAuthMode(m){
+  authMode = m;
+  const login = m==='login';
+  el('authTitle').textContent = login ? '로그인' : '회원가입';
+  el('authLead').textContent  = login ? '로그인하면 학습 진도가 계정에 저장되어 어느 기기에서든 이어집니다.'
+                                       : '이메일과 비밀번호로 새 계정을 만드세요. (비밀번호 6자 이상)';
+  el('authSubmit').textContent = login ? '로그인' : '가입하기';
+  el('authPw').setAttribute('autocomplete', login ? 'current-password' : 'new-password');
+  el('authToggle').innerHTML = login
+    ? '계정이 없으신가요? <a id="toSignup">회원가입</a>'
+    : '이미 계정이 있으신가요? <a id="toLogin">로그인</a>';
+  const t = el(login?'toSignup':'toLogin'); if(t) t.onclick=()=>{ setAuthMode(login?'signup':'login'); authMsg(''); };
+}
+function krErr(m){
+  if(/already registered|already been registered|User already/i.test(m)) return '이미 가입된 이메일입니다. 로그인해 주세요.';
+  if(/Email not confirmed/i.test(m)) return '이메일 인증이 필요합니다. 받은 편지함의 확인 링크를 클릭한 뒤 로그인하세요.';
+  if(/Invalid login credentials/i.test(m)) return '이메일 또는 비밀번호가 올바르지 않습니다.';
+  if(/Password should be at least/i.test(m)) return '비밀번호는 6자 이상이어야 합니다.';
+  if(/rate limit|too many/i.test(m)) return '요청이 많습니다. 잠시 후 다시 시도하세요.';
+  return '오류: ' + m;
+}
+async function doAuth(){
+  if(!sb){ authMsg('Supabase에 연결되어 있지 않습니다.'); return; }
+  const email = el('authEmail').value.trim();
+  const pw = el('authPw').value;
+  if(!email || !pw){ authMsg('이메일과 비밀번호를 입력하세요.'); return; }
+  if(pw.length < 6){ authMsg('비밀번호는 6자 이상이어야 합니다.'); return; }
+  el('authSubmit').disabled = true; authMsg('처리 중…', true);
+  try{
+    if(authMode==='signup'){
+      const { data, error } = await sb.auth.signUp({ email, password: pw });
+      if(error){ authMsg(krErr(error.message)); return; }
+      if(data.session){ authMsg('가입 완료! 로그인되었습니다.', true); setTimeout(closeAuth, 800); }
+      else { authMsg('확인 메일을 보냈습니다. 메일의 링크를 클릭한 뒤 로그인하세요.', true); }
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      if(error){ authMsg(krErr(error.message)); return; }
+      authMsg('로그인되었습니다!', true); setTimeout(closeAuth, 600);
+    }
+  } finally { el('authSubmit').disabled = false; }
+}
+async function doSignOut(){
+  if(sb) await sb.auth.signOut();
+  currentUser = null;
+  state = { progress:{}, xp:0, streak:0, lastDay:null };
+  store.set(state); renderTop(); renderLessons(); updateAuthUI(); setSync('local');
+}
+function updateAuthUI(){
+  const a = el('acct'); if(!a) return;
+  if(currentUser){
+    a.innerHTML = `<span class="email" title="${currentUser.email||''}">👤 ${currentUser.email||'로그인됨'}</span>
+      <button class="mini" id="logoutBtn">로그아웃</button>`;
+    el('logoutBtn').onclick = doSignOut;
+  } else {
+    a.innerHTML = `<button class="mini" id="loginBtn">로그인 / 가입</button>`;
+    el('loginBtn').onclick = ()=>openAuth('login');
+  }
+}
+async function initAuth(){
+  updateAuthUI();
+  if(!sb){ setSync('off'); return; }
+  sb.auth.onAuthStateChange((_evt, session)=>{
+    currentUser = session ? session.user : null;
+    updateAuthUI();
+    if(currentUser) cloudLoad(); else setSync('local');
+  });
+  const { data:{ session } } = await sb.auth.getSession();
+  currentUser = session ? session.user : null;
+  updateAuthUI();
+  if(currentUser) cloudLoad(); else setSync('local');
+}
+// modal wiring
+el('authClose').onclick = closeAuth;
+el('authSubmit').onclick = doAuth;
+el('authModal').onclick = e=>{ if(e.target===el('authModal')) closeAuth(); };
+el('authPw').addEventListener('keydown', e=>{ if(e.key==='Enter') doAuth(); });
+el('authEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') el('authPw').focus(); });
+
 /* ---------------- INIT ---------------- */
 renderTop(); renderLessons(); buildCards();
-setSync(sb ? 'sync' : 'off');
-cloudLoad();
+setSync('local');
+initAuth();
 </script>
 </body>
 </html>
