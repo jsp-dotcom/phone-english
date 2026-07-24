@@ -58,6 +58,11 @@
   .round-head h2{margin:0; font-size:20px}
   .round-head p{margin:3px 0 0; color:var(--muted); font-size:13px}
   .round-prog{font-size:12px; color:var(--muted); background:var(--card); border:1px solid var(--line); padding:5px 12px; border-radius:999px; white-space:nowrap}
+  .premium-badge{font-size:11px; font-weight:800; padding:2px 9px; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; margin-left:8px; vertical-align:middle}
+  .lesson.locked{opacity:.75}
+  .lesson.locked:hover{transform:none; border-color:var(--warn)}
+  .lesson.locked .emoji{filter:grayscale(.5)}
+  .lesson .lock{display:inline-block; margin-top:12px; font-size:11px; padding:3px 10px; border-radius:999px; background:color-mix(in srgb,var(--warn) 20%,transparent); color:var(--warn)}
   .lesson{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
     padding:18px; cursor:pointer; transition:.18s; box-shadow:var(--shadow)}
   .lesson:hover{transform:translateY(-3px); border-color:var(--accent)}
@@ -273,6 +278,10 @@ function deviceId(){
 }
 let currentUser = null;
 function cloudKey(){ return currentUser ? currentUser.id : null; } // 로그인 사용자만 클라우드 사용
+// 프리미엄(유료) 접근 권한 — 현재는 '로그인 = 이용 가능'. 추후 결제 연동 시 구독 상태로 대체.
+function isPremium(){ return !!currentUser; }
+const FREE_ROUNDS = 1; // 무료로 열려 있는 회차 (1회차까지 무료, 2회차부터 프리미엄)
+function lessonLocked(l){ return (l.round||1) > FREE_ROUNDS && !isPremium(); }
 function setSync(status){ // 'ok' | 'sync' | 'off' | 'local'
   const d = document.getElementById('syncDot'); if(!d) return;
   const icon = {ok:'☁️', sync:'🔄', off:'⚠️', local:'💾'};
@@ -570,14 +579,28 @@ function renderLessons(){
   const rounds=[...new Set(LESSONS.map(l=>l.round||1))].sort((a,b)=>a-b);
   rounds.forEach(r=>{
     const items=LESSONS.filter(l=>(l.round||1)===r);
+    const premiumRound = r > FREE_ROUNDS;
+    const locked = premiumRound && !isPremium();
     const doneCount=items.filter(l=>state.progress[l.id]).length;
     const meta=ROUNDS[r]||{title:r+'회차', desc:''};
     const head=document.createElement('div'); head.className='round-head';
-    head.innerHTML=`<div><h2>${meta.title}</h2><p>${meta.desc}</p></div>
-      <span class="round-prog">${doneCount} / ${items.length} 완료</span>`;
+    head.innerHTML=`<div>
+        <h2>${meta.title}${premiumRound?'<span class="premium-badge">PREMIUM</span>':''}</h2>
+        <p>${locked ? '🔒 로그인하면 이용할 수 있어요' : meta.desc}</p>
+      </div>
+      <span class="round-prog">${locked ? '🔒 잠김' : doneCount+' / '+items.length+' 완료'}</span>`;
     g.appendChild(head);
     const grid=document.createElement('div'); grid.className='grid';
     items.forEach(l=>{
+      if(lessonLocked(l)){
+        const el=document.createElement('div'); el.className='lesson locked';
+        el.innerHTML=`<div class="emoji">${l.emoji}</div>
+          <h3>${l.title}</h3><div class="lv">${l.level} · 문장 ${l.lines.length}개</div>
+          <span class="lock">🔒 로그인 후 이용</span>`;
+        el.onclick=()=>openAuth('login');
+        grid.appendChild(el);
+        return;
+      }
       const done = state.progress[l.id];
       const el=document.createElement('div'); el.className='lesson'+(done?' done':'');
       el.innerHTML=`<div class="emoji">${l.emoji}</div>
@@ -593,6 +616,7 @@ function renderLessons(){
 
 let current=null;
 function openLesson(l){
+  if(lessonLocked(l)){ openAuth('login'); return; }  // 프리미엄 회차는 로그인 필요
   current=l; markStreak();
   document.getElementById('dEm').textContent=l.emoji;
   document.getElementById('dTitle').textContent=l.title;
@@ -683,7 +707,7 @@ function closeAuth(){ el('authModal').classList.remove('show'); }
 function setAuthMode(m){
   authMode = m;
   const cfg = {
-    login:  { title:'로그인', lead:'로그인하면 학습 진도가 계정에 저장되어 어느 기기에서든 이어집니다.',
+    login:  { title:'로그인', lead:'로그인하면 2회차 이후 프리미엄 콘텐츠가 열리고, 진도가 계정에 저장됩니다.',
               btn:'로그인', email:true, pw:true, pwLabel:'비밀번호', ac:'current-password',
               toggle:'계정이 없으신가요? <a id="toSignup">회원가입</a> · <a id="toForgot">비밀번호 찾기</a>' },
     signup: { title:'회원가입', lead:'이메일과 비밀번호로 새 계정을 만드세요. (비밀번호 6자 이상)',
