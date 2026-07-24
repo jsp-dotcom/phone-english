@@ -53,6 +53,11 @@
     background:radial-gradient(circle,var(--accent2),transparent 70%); opacity:.35}
 
   .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px}
+  .round-head{display:flex; justify-content:space-between; align-items:flex-end; margin:28px 0 14px; gap:12px; flex-wrap:wrap}
+  .round-head:first-child{margin-top:4px}
+  .round-head h2{margin:0; font-size:20px}
+  .round-head p{margin:3px 0 0; color:var(--muted); font-size:13px}
+  .round-prog{font-size:12px; color:var(--muted); background:var(--card); border:1px solid var(--line); padding:5px 12px; border-radius:999px; white-space:nowrap}
   .lesson{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
     padding:18px; cursor:pointer; transition:.18s; box-shadow:var(--shadow)}
   .lesson:hover{transform:translateY(-3px); border-color:var(--accent)}
@@ -172,7 +177,7 @@
       <h1>매일 10분, 전화영어 회화</h1>
       <p>상황별 대화를 듣고, 따라 말하고, 발음을 평가받으세요. 마이크만 있으면 됩니다.</p>
     </div>
-    <div class="grid" id="lessonGrid"></div>
+    <div id="lessonGrid"></div>
   </section>
 
   <!-- LESSON DETAIL -->
@@ -362,6 +367,92 @@ const LESSONS = [
       {en:"Let's touch base next week.", ko:"다음 주에 다시 얘기해요."},
       {en:"Have a great day!", ko:"좋은 하루 보내세요!"},
     ]},
+
+  /* ===== 2회차 · 비즈니스 전화영어 ===== */
+  { id:"progress_update", round:2, emoji:"📊", title:"업무 진행 상황 공유", level:"중급",
+    sub:"프로젝트 진행 상황을 전화로 보고하기",
+    lines:[
+      {s:"A", en:"Hi, I'm calling to give you a quick update on the project.", ko:"안녕하세요, 프로젝트 진행 상황을 간단히 알려드리려 전화했어요."},
+      {s:"B", en:"Great, how's it coming along?", ko:"좋아요, 어떻게 진행되고 있나요?"},
+      {s:"A", en:"We're on track to finish by Friday.", ko:"금요일까지 끝낼 수 있을 것 같아요."},
+      {s:"B", en:"That's good to hear. Any roadblocks?", ko:"다행이네요. 걸림돌은 없나요?"},
+      {s:"A", en:"Nothing major, but I'll keep you posted.", ko:"큰 건 없어요, 계속 알려드릴게요."},
+    ],
+    exp:[
+      {en:"give you a quick update", ko:"간단히 상황을 알려드리다"},
+      {en:"We're on track to ___", ko:"___할 수 있게 순조롭게 가고 있어요"},
+      {en:"I'll keep you posted.", ko:"계속 소식 전해드릴게요."},
+    ]},
+  { id:"negotiate", round:2, emoji:"🤝", title:"조건 협상", level:"중급",
+    sub:"가격·조건을 정중하게 조율하기",
+    lines:[
+      {s:"A", en:"I'd like to discuss the pricing before we move forward.", ko:"진행하기 전에 가격 조건을 논의하고 싶어요."},
+      {s:"B", en:"Sure. What did you have in mind?", ko:"물론이죠. 어떻게 생각하고 계세요?"},
+      {s:"A", en:"Would you be able to offer a discount for a larger order?", ko:"대량 주문 시 할인해 주실 수 있나요?"},
+      {s:"B", en:"We could work something out. Let me check with my team.", ko:"조율해 볼 수 있어요. 팀과 확인해 볼게요."},
+      {s:"A", en:"That works. I appreciate your flexibility.", ko:"좋아요. 유연하게 대응해 주셔서 감사해요."},
+    ],
+    exp:[
+      {en:"before we move forward", ko:"진행하기 전에"},
+      {en:"What did you have in mind?", ko:"어떻게 생각하고 계세요?"},
+      {en:"We could work something out.", ko:"조율해 볼 수 있어요."},
+    ]},
+  { id:"conference", round:2, emoji:"🎤", title:"컨퍼런스 콜", level:"중급",
+    sub:"여러 명이 참여하는 전화 회의 시작하기",
+    lines:[
+      {s:"A", en:"Can everyone hear me okay?", ko:"다들 잘 들리시나요?"},
+      {s:"B", en:"Yes, loud and clear.", ko:"네, 아주 또렷하게 잘 들려요."},
+      {s:"A", en:"Great. Let's go over today's agenda.", ko:"좋아요. 오늘 안건을 살펴보죠."},
+      {s:"B", en:"Before we start, could we wait for Tom to join?", ko:"시작 전에 Tom이 들어올 때까지 기다릴까요?"},
+      {s:"A", en:"Good idea. Let's give him a minute.", ko:"좋은 생각이에요. 잠깐 기다리죠."},
+    ],
+    exp:[
+      {en:"Can everyone hear me okay?", ko:"다들 잘 들리시나요?"},
+      {en:"Let's go over the agenda.", ko:"안건을 살펴봅시다."},
+      {en:"loud and clear", ko:"아주 또렷하게 (잘 들림)"},
+    ]},
+  { id:"followup", round:2, emoji:"📧", title:"후속 조치 확인", level:"중급",
+    sub:"보낸 이메일·요청에 대해 다시 연락하기",
+    lines:[
+      {s:"A", en:"I'm following up on the email I sent last week.", ko:"지난주에 보낸 이메일 관련해 다시 연락드려요."},
+      {s:"B", en:"Right, I've been meaning to get back to you.", ko:"네, 안 그래도 답장드리려던 참이었어요."},
+      {s:"A", en:"No worries. Did you get a chance to review it?", ko:"괜찮아요. 검토해 보실 시간 있으셨나요?"},
+      {s:"B", en:"I did. Let's set up a call to go through the details.", ko:"봤어요. 세부사항은 통화로 정리하시죠."},
+      {s:"A", en:"Sounds good. I'll send some times over.", ko:"좋아요. 가능한 시간 몇 개 보내드릴게요."},
+    ],
+    exp:[
+      {en:"I'm following up on ___", ko:"___ 관련해 다시 연락드려요"},
+      {en:"Did you get a chance to ___?", ko:"___하실 시간 있으셨나요?"},
+      {en:"I'll send some times over.", ko:"가능한 시간을 보내드릴게요."},
+    ]},
+  { id:"reschedule", round:2, emoji:"🗓️", title:"일정 변경·취소", level:"중급",
+    sub:"약속을 미루거나 변경 요청하기",
+    lines:[
+      {s:"A", en:"I'm afraid I need to reschedule our meeting.", ko:"죄송하지만 미팅 일정을 변경해야 할 것 같아요."},
+      {s:"B", en:"No problem. When would suit you better?", ko:"괜찮아요. 언제가 더 편하세요?"},
+      {s:"A", en:"Could we push it to next Tuesday?", ko:"다음 주 화요일로 미룰 수 있을까요?"},
+      {s:"B", en:"Tuesday works for me. Same time?", ko:"화요일 좋아요. 같은 시간에요?"},
+      {s:"A", en:"Yes, thanks for being flexible.", ko:"네, 배려해 주셔서 감사해요."},
+    ],
+    exp:[
+      {en:"I need to reschedule.", ko:"일정을 변경해야 해요."},
+      {en:"Could we push it to ___?", ko:"___로 미룰 수 있을까요?"},
+      {en:"When would suit you better?", ko:"언제가 더 편하세요?"},
+    ]},
+  { id:"interview", round:2, emoji:"💼", title:"전화 면접", level:"중상급",
+    sub:"채용 전화 면접에서 자기소개하고 답하기",
+    lines:[
+      {s:"A", en:"Thanks for taking the time to speak with me today.", ko:"오늘 시간 내어 통화해 주셔서 감사합니다."},
+      {s:"B", en:"Of course. Could you tell me a bit about yourself?", ko:"물론이죠. 자기소개를 간단히 해주시겠어요?"},
+      {s:"A", en:"Sure. I have five years of experience in marketing.", ko:"네. 마케팅 분야에서 5년 경력이 있습니다."},
+      {s:"B", en:"Great. What interests you about this role?", ko:"좋습니다. 이 직무의 어떤 점에 관심이 있으신가요?"},
+      {s:"A", en:"I'm drawn to the chance to lead a team.", ko:"팀을 이끌 기회에 매력을 느낍니다."},
+    ],
+    exp:[
+      {en:"Thanks for taking the time.", ko:"시간 내주셔서 감사합니다."},
+      {en:"Could you tell me about yourself?", ko:"자기소개를 해주시겠어요?"},
+      {en:"What interests you about this role?", ko:"이 직무의 어떤 점에 관심 있으세요?"},
+    ]},
 ];
 
 /* ---------------- STATE ---------------- */
@@ -470,17 +561,33 @@ function show(view){
 }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ if(t.dataset.view==='cards')renderCard(); show(t.dataset.view); });
 
+const ROUNDS = {
+  1: { title:'1회차 · 기초 전화영어', desc:'전화 통화의 기본 흐름 익히기' },
+  2: { title:'2회차 · 비즈니스 전화영어', desc:'업무·미팅·면접 상황 표현' },
+};
 function renderLessons(){
   const g=document.getElementById('lessonGrid'); g.innerHTML='';
-  LESSONS.forEach(l=>{
-    const done = state.progress[l.id];
-    const el=document.createElement('div'); el.className='lesson'+(done?' done':'');
-    el.innerHTML=`<div class="emoji">${l.emoji}</div>
-      <h3>${l.title}</h3><div class="lv">${l.level} · 문장 ${l.lines.length}개</div>
-      <span class="pill">${done?'✓ 완료':'학습하기'}</span>
-      <div class="barwrap"><i style="width:${done?100:0}%"></i></div>`;
-    el.onclick=()=>openLesson(l);
-    g.appendChild(el);
+  const rounds=[...new Set(LESSONS.map(l=>l.round||1))].sort((a,b)=>a-b);
+  rounds.forEach(r=>{
+    const items=LESSONS.filter(l=>(l.round||1)===r);
+    const doneCount=items.filter(l=>state.progress[l.id]).length;
+    const meta=ROUNDS[r]||{title:r+'회차', desc:''};
+    const head=document.createElement('div'); head.className='round-head';
+    head.innerHTML=`<div><h2>${meta.title}</h2><p>${meta.desc}</p></div>
+      <span class="round-prog">${doneCount} / ${items.length} 완료</span>`;
+    g.appendChild(head);
+    const grid=document.createElement('div'); grid.className='grid';
+    items.forEach(l=>{
+      const done = state.progress[l.id];
+      const el=document.createElement('div'); el.className='lesson'+(done?' done':'');
+      el.innerHTML=`<div class="emoji">${l.emoji}</div>
+        <h3>${l.title}</h3><div class="lv">${l.level} · 문장 ${l.lines.length}개</div>
+        <span class="pill">${done?'✓ 완료':'학습하기'}</span>
+        <div class="barwrap"><i style="width:${done?100:0}%"></i></div>`;
+      el.onclick=()=>openLesson(l);
+      grid.appendChild(el);
+    });
+    g.appendChild(grid);
   });
 }
 
